@@ -1,0 +1,4 @@
+kw_env
+*.log
+secrets.py
+__pycache__
