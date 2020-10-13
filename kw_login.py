@@ -53,6 +53,9 @@ class kw_login:
 
 		return {'url': bot.command_executor._url, 'session_id': bot.session_id}
 
+	def report_tasks(self):
+		pass
+
 	def kw_v5_logout(self):
 		bot = self.bot
 		time.sleep(random.randrange(3,6))
@@ -79,26 +82,17 @@ if __name__ == "__main__":
 			if login_time.time() <= cur_time.time():
 				k.kw_v6_login()
 				time.sleep(random.randrange(8,14))
-				resp = k.kw_v5_login()
+				bot = k.kw_v5_login()
 			if logoff_time.time() <= cur_time.time():
+				time.sleep(random.randrange(5,10))
+				k.report_tasks()
 				time.sleep(random.randrange(5,10))
 				k.kw_v5_logout()
 				time.sleep(random.randrange(5,10))
-				resp = k.kw_v6_logout()
-			resp.quit()
+				bot = k.kw_v6_logout()
+			time.sleep(random.randrange(5,10))
+			bot.quit()
 		else:
 			raise ImportError('Please check if you have secrets file in same directory as this one.')
 	except ImportError as e:
 		print(e)
-
-
-
-### For using existing browser
-# bot_dict = k.get_open_window_status()
-# print("BOT DICT", bot_dict)
-# if bot_dict.get('url') != False:
-# 	old_bot = webdriver.Remote(command_executor=bot_dict.get('url'),desired_capabilities={})
-# 	old_bot.session_id = bot_dict.get('session_id')
-# 	body = old_bot.find_element_by_tag_name("body")
-# 	body.send_keys(Keys.CONTROL + 't')
-# 	old_bot.get("https://twitter.com/")

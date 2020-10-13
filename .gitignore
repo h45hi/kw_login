@@ -2,3 +2,4 @@ kw_env
 *.log
 secrets.py
 __pycache__
+project_scopes.txt
