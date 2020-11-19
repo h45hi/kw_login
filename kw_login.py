@@ -3,19 +3,29 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from datetime import datetime
 from getopt import getopt
-import os, time, random
+import os, time, random, argparse
 
 URL='https://portal.csm.co.in'
 login_time=datetime(year=2020, month=9, day=30, hour=8, minute=40, second=0)
 logoff_time=datetime(year=2020, month=9, day=30, hour=19, minute=30, second=0)
 cur_time=datetime.now()
 
+my_parser = argparse.ArgumentParser(allow_abbrev=False)
+my_parser.add_argument('--username', action='store', type=str, required=True, metavar='', help='Username for logging in portal')
+my_parser.add_argument('--password', action='store', type=str, required=True, metavar='', help='Password for logging in portal')
+my_parser.add_argument('--browser', action='store', type=str, required=True, metavar='', help='Broswer of choice[Chrome/Firefox]')
+my_parser.add_argument('--check_in', action='store_true',
+						help='Willing to check in, include this flag if want to set as true, default:False *Optional')
+my_parser.add_argument('--log_out', action='store_true', 
+						help='Willing to log out, include this flag if want to set as true, default:False *Optional')k
+args = my_parser.parse_args()
+
 class kw_login:
 
 	def __init__(self,username,password):
 		self.username = username
 		self.password = password
-		self.bot = webdriver.Chrome()
+		self.bot = webdriver.Chrome() if args.browser.lower() == 'chrome' else webdriver.Firefox()
 		self.bot.maximize_window()
 
 	def kw_v6_login(self):
@@ -32,7 +42,8 @@ class kw_login:
 		time.sleep(random.randrange(3,6))
 		password.send_keys(Keys.RETURN)
 		time.sleep(random.randrange(6,10))
-		# check_in = bot.find_element_by_xpath('/html/body/div[2]/main/div[2]/div/div/div/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div').click()
+		if args.check_in:
+			check_in = bot.find_element_by_xpath('/html/body/div[2]/main/div[2]/div/div/div/div/div/div[2]/div/div/div[3]/div/div[1]/div/div/div').click()
 		return bot
 
 	"""Needed incase of task reporting"""
@@ -78,12 +89,13 @@ class kw_login:
 			""" Set Task Status as completed """
 			task_sts = Select(bot.find_element_by_id('selStatus'))
 			task_sts.select_by_value('2')
+			time_selection = '//*[@id="frmTask"]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[1]/table/tbody/tr[4]/td[3]/span[1]/ul/'
 			""" Set From Time as 9:00 AM """
 			bot.find_element_by_id('txtFromTime').click()
-			bot.find_element_by_xpath('//*[@id="frmTask"]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[1]/table/tbody/tr[4]/td[3]/span[1]/ul/li[37]').click()
+			bot.find_element_by_xpath(time_selection+'li[37]').click()
 			""" Set To Time as 5:00 PM """
 			bot.find_element_by_id('txtToTime').click()
-			bot.find_element_by_xpath('//*[@id="frmTask"]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[1]/table/tbody/tr[5]/td[3]/span[1]/ul/li[69]').click()
+			bot.find_element_by_xpath(time_selection+'li[69]').click()
 			""" Set To Remark """
 			remark = bot.find_element_by_id('txtARemarks')
 			remark.send_keys('completed')
@@ -106,20 +118,12 @@ class kw_login:
 		return bot
 
 if __name__ == "__main__":
-	try:
-		if os.path.exists('./secrets.py'):
-			from secrets import kw_username, kw_password
-			k = kw_login(kw_username,kw_password)
-			if login_time.time() <= cur_time.time():
-				resp = k.kw_v6_login()
-				k.kw_v5_login()
-			# if logoff_time.time() <= cur_time.time():
-			# 	time.sleep(random.randrange(5,10))
-			# 	resp = k.kw_v6_logout()
-			task_links = k.get_task_links()
-			if len(task_links)>0:
-				k.report_project_task(task_links)
-		else:
-			raise ImportError('Please check if you have secrets file in same directory as this one.')
-	except ImportError as e:
-		print(e)
+	k = kw_login(args.username, args.password)
+	resp = k.kw_v6_login()
+	k.kw_v5_login()
+	if args.log_out:
+		time.sleep(random.randrange(5,10))
+		resp = k.kw_v6_logout()
+	task_links = k.get_task_links()
+	if len(task_links) > 0:
+		k.report_project_task(task_links)
