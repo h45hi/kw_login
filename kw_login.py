@@ -1,9 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from datetime import datetime
-from getopt import getopt
-import os, time, random, argparse
+import time, random, argparse
 
 URL='https://portal.csm.co.in'
 
@@ -44,6 +42,7 @@ class kw_login:
 		if args.check_in:
 			check_in = bot.find_element_by_xpath('/html/body/div[2]/main/div[2]/div/div/div/div/div/div[2]\
 													/div/div/div[3]/div/div[1]/div/div/div').click()
+		time.sleep(random.randrange(3,6))
 		return bot
 
 	"""Needed incase of task reporting"""
@@ -53,6 +52,51 @@ class kw_login:
 		dashboard_menu = bot.find_element_by_xpath("/html/body/header/nav/ul[1]/li/a").click()
 		time.sleep(random.randrange(5,8))
 		kwv5_menu = bot.find_element_by_link_text('Kwantify V5').click()
+
+	""" Needed to wish all (Birthday/Year of Service/Well Wishes/Anniversary) """
+	def kw_wish_all(self):
+		bot = self.bot
+		self.kw_v5_login()
+		csm_tab = self.get_tab(tab_key='DashboardStandardv1')
+		bot.switch_to.window(csm_tab)
+		time.sleep(random.randrange(3,6))
+		bot.execute_script("window.scrollBy(0,100)")
+		bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="34"]/div/iframe'))
+		# Switching to birthday frame
+		wish_ids = ["birthdayId", "yearOfServiceId", "wellWishesId", "anniversaryId"]
+		for wish_id in wish_ids:
+			wish_btn = bot.find_element_by_id(wish_id)
+			print(f'{wish_id} having count {wish_btn.get_attribute("innerHTML")}')
+			if int(wish_btn.get_attribute("innerHTML")) > 1:
+				wish_btn.click()
+				time.sleep(random.randrange(1,3))
+				bot.switch_to.window(csm_tab)
+				# Switching to wish modal
+				bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="myFrame"]'))
+				bot.execute_script("window.scrollBy(0,document.scrollingElement.scrollHeight)")
+				time.sleep(random.randrange(1,3))
+				# Clicking on wish all button
+				bot.find_element_by_xpath('//*[@id="btnWishToAll"]').click()
+				bot.switch_to.window(csm_tab)
+				# Close modal
+				time.sleep(random.randrange(1,3))
+				bot.find_element_by_xpath('//*[@id="myModal"]/div[1]/button').click()
+				time.sleep(random.randrange(1,3))
+				bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="34"]/div/iframe'))
+			if int(wish_btn.get_attribute("innerHTML")) == 1:
+				wish_btn.click()
+				time.sleep(random.randrange(1,3))
+				bot.switch_to.window(csm_tab)
+				bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="myFrame"]'))
+				bot.execute_script("window.scrollBy(0,document.scrollingElement.scrollHeight)")
+				time.sleep(random.randrange(1,3))
+				bot.find_element_by_xpath('//*[@id="1618"]/div[2]/div[2]/button[2]').click()
+				bot.switch_to.window(csm_tab)
+				time.sleep(random.randrange(1,3))
+				bot.find_element_by_xpath('//*[@id="myModal"]/div[1]/button').click()
+				time.sleep(random.randrange(1,3))
+				bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="34"]/div/iframe'))
+
 
 	""" Switch to specific tab depending on tab_key """
 	def get_tab(self, tab_key=None):
@@ -89,25 +133,25 @@ class kw_login:
 			bot.execute_script(f'''window.open("{link}","_blank");''')
 			task_tab = self.get_tab(tab_key='TaskReporting')
 			bot.switch_to.window(task_tab)
-			""" Set Task Status as completed """
+			# Set Task Status as completed
 			task_sts = Select(bot.find_element_by_id('selStatus'))
 			task_sts.select_by_value('2')
 			time_selection = '//*[@id="frmTask"]/table/tbody/tr[3]/td/table/tbody/tr[2]/td[1]/table/tbody/tr[4]/td[3]/span[1]/ul/'
-			""" Set From Time as 9:00 AM """
+			# Set From Time as 9:00 AM
 			bot.find_element_by_id('txtFromTime').click()
 			bot.find_element_by_xpath(time_selection+'li[37]').click()
-			""" Set To Time as 5:00 PM """
+			# Set To Time as 5:00 PM
 			bot.find_element_by_id('txtToTime').click()
 			bot.find_element_by_xpath(time_selection+'li[69]').click()
-			""" Set To Remark """
+			# Set To Remark
 			remark = bot.find_element_by_id('txtARemarks')
 			remark.send_keys('completed')
-			""" Click on Submit button & close current tab """
+			# Click on Submit button & close current tab
 			bot.find_element_by_id('btnSubmit').click()
 			alert_obj = bot.switch_to.alert
 			alert_obj.accept()
 			bot.close()
-			""" Switch back to task table page """
+			# Switch back to task table page
 			task_tab = self.get_tab(tab_key='framepage.aspx')
 			bot.switch_to.window(task_tab)
 
@@ -125,6 +169,8 @@ class kw_login:
 if __name__ == "__main__":
 	k = kw_login(args.username, args.password)
 	resp = k.kw_v6_login()
+	if args.check_in:
+		k.kw_wish_all()
 	if args.report_task:
 		k.kw_v5_login()
 		task_links = k.get_task_links()
