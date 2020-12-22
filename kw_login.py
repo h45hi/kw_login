@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import ElementNotInteractableException
 import time, random, argparse
 
 URL='https://portal.csm.co.in'
@@ -45,7 +46,7 @@ class kw_login:
 		time.sleep(random.randrange(3,6))
 		return bot
 
-	"""Needed incase of task reporting"""
+	""" Needed incase of task reporting """
 	def kw_v5_login(self):
 		bot = self.bot
 		time.sleep(random.randrange(8,14))
@@ -66,7 +67,6 @@ class kw_login:
 		wish_ids = ["birthdayId", "yearOfServiceId", "wellWishesId", "anniversaryId"]
 		for wish_id in wish_ids:
 			wish_btn = bot.find_element_by_id(wish_id)
-			print(f'{wish_id} having count {wish_btn.get_attribute("innerHTML")}')
 			if int(wish_btn.get_attribute("innerHTML")) > 1:
 				wish_btn.click()
 				time.sleep(random.randrange(1,3))
@@ -90,7 +90,10 @@ class kw_login:
 				bot.switch_to.frame(bot.find_element_by_xpath('//*[@id="myFrame"]'))
 				bot.execute_script("window.scrollBy(0,document.scrollingElement.scrollHeight)")
 				time.sleep(random.randrange(1,3))
-				bot.find_element_by_xpath('//*[@id="1618"]/div[2]/div[2]/button[2]').click()
+				try:
+					bot.find_element_by_class_name('successId').click()
+				except ElementNotInteractableException:
+					pass
 				bot.switch_to.window(csm_tab)
 				time.sleep(random.randrange(1,3))
 				bot.find_element_by_xpath('//*[@id="myModal"]/div[1]/button').click()
